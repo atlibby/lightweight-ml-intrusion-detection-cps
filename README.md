@@ -50,3 +50,4 @@ Each model can be run via test_suite.py, which automatically builds and caches p
 - GPU is required for transformer-based models (DistilBERT, TinyLlama).
 - Large datasets may require significant RAM.
 - Feature caching is used to speed up repeated runs - verify that cache directories correspond to correct paths.
+- pipelines/data_pipeline_v2.py is an updated version of the pipeline code with extra caching logic, was not used for these experiments
