@@ -43,7 +43,8 @@ Each model can be run via test_suite.py, which automatically builds and caches p
 ---
 
 ## Notes
-- GPU used to run tests for data in current results directory files: A100 (167.1 GB system RAM; 80 GB GPU RAM)
+- code_snapshot.zip included in repo with files used for initial experiments to preserve version history in case of future experiments
+- GPU used to run tests for code_snapshot.zip: A100 (167.1 GB system RAM; 80 GB GPU RAM)
 - GPU is required for transformer-based models (DistilBERT, TinyLlama).
 - Large datasets may require significant RAM.
 - Feature caching is used to speed up repeated runs - verify that cache directories correspond to correct paths.
