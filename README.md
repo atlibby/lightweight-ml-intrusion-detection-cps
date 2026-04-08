@@ -18,7 +18,9 @@ The repository includes full data pipelines, model implementations, and results 
 ## Running Models
 
 Each model can be run via test_suite.py, which automatically builds and caches pipelines, then iterates through required training configurations and modalities, afterwhich it records and caches metrics and plots (macro-F1, precision, recall, accuracy, confusion matrices and loss curves):
+- **Recommended method:** python test_suite.py (or run from .ipynb file)
 
+#### Optional for individual tests and debugging (or just run notebooks in .ipynb files):
 - Random Forest:
   python rf_baseline.py
 
