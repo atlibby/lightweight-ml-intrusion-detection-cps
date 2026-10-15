@@ -222,45 +222,42 @@ def preprocess_dataframe(df):
 
 # enterprise network/N(t) - network features
 def load_all_cicids():
-  df_all = None
+  frames = []
 
-  for file in os.listdir(cicids_dir):
+  for file in sorted(os.listdir(cicids_dir)):
     if file.endswith('.parquet'):
       path = os.path.join(cicids_dir, file)
       df = load_raw_file(path)
       df = preprocess_dataframe(df)
+      frames.append(df)
 
-      if df_all is None:
-        df_all = df
+  if not frames:
+    raise FileNotFoundError("No matching CICIDS files found")
 
-      else:
-        df_all = pd.concat([df_all, df], ignore_index=True)
-
-  return df_all
+  return pd.concat(frames, ignore_index=True)
 
 
 # IoT network traffic/P(t) - physical sensor features
 def load_ton_network():
-  df_all = None
+  frames = []
+
   for root, _, files in os.walk(toniot_dir):
     for f in files:
       if f.endswith('network.csv'):
         path = os.path.join(root, f)
         df = load_raw_file(path)
         df = preprocess_dataframe(df)
+        frames.append(df)
 
-        if df_all is None:
-          df_all = df
-
-        else:
-          df_all = pd.concat([df_all, df], ignore_index=True)
-
-  return df_all
+  if not frames:
+      raise FileNotFoundError("No matching TON-IoT network files found")
+  
+  return pd.concat(frames, ignore_index=True)
 
 
 # physical sensor telemetry/D(t) - device/logical state
 def load_ton_sensor():
-  df_all = None
+  frames = []
 
   for root, _, files in os.walk(toniot_dir):
     for f in files:
@@ -268,14 +265,12 @@ def load_ton_sensor():
         path = os.path.join(root, f)
         df = load_raw_file(path)
         df = preprocess_dataframe(df)
+        frames.append(df)
 
-        if df_all is None:
-          df_all = df
+  if not frames:
+    raise FileNotFoundError("No matching CICIDS files found")
 
-        else:
-          df_all = pd.concat([df_all, df], ignore_index=True)
-
-  return df_all
+  return pd.concat(frames, ignore_index=True)
 
 
 def safe_log_transform(df, cols):
