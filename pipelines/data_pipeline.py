@@ -486,7 +486,7 @@ def build_network_profile(train_df, profile_path="profiles/network_log_robust_sc
 
 
 def build_categorical_profile(train_df, profile_path="profiles/categorical.pkl"):
-    parent_dir = os.dirname(profile_path)
+    parent_dir = os.path.dirname(profile_path)
 
     if parent_dir:
           os.makedirs(parent_dir, exist_ok=True)
