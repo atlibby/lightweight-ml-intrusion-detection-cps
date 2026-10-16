@@ -23,8 +23,8 @@ from sklearn.model_selection import train_test_split
 import os
 from pandas.api.types import CategoricalDtype
 
-cicids_dir = '/content/drive/MyDrive/School Archives/Wentworth Classes/Year 2/Semester 2/Thesis 2/Datasets/CICIDS2017'
-toniot_dir = '/content/drive/MyDrive/School Archives/Wentworth Classes/Year 2/Semester 2/Thesis 2/Datasets/TON-IoT'
+cicids_dir = '/datasets/CICIDS2017'
+toniot_dir = '/datasets/TONIoT'
 CACHE_DIR = "cache"
 os.makedirs(CACHE_DIR, exist_ok=True)
 
@@ -463,7 +463,10 @@ def encode_categorical(df, profile_path="profiles/categorical.pkl"):
 
 
 def build_network_profile(train_df, profile_path="profiles/network_log_robust_scaler.pkl"):
-    os.makedirs("profiles", exist_ok=True)
+    parent_dir = os.path.dirname(profile_path)
+
+    if parent_dir:
+      os.makedirs(parent_dir, exist_ok=True)
 
     df_all = select_existing(train_df, LOG_ROBUST)
 
