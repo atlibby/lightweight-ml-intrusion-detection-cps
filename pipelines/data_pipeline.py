@@ -387,27 +387,29 @@ def transform_fused_features(df):
   return X
 
 
-def transform_network(df):
-  df = df.copy()
-  if not os.path.exists("profiles/network_log_robust_scaler.pkl"):
-      build_network_profile(df)
-  bundle = joblib.load("profiles/network_log_robust_scaler.pkl")
-  scaler = bundle["scaler"]
-  fit_cols = bundle["columns"]
+def transform_network(df, profile_path="profiles/network_log_robust_scaler.pkl"):
+  try:
+    df = df.copy()
+    bundle = joblib.load(profile_path)
+    scaler = bundle["scaler"]
+    fit_cols = bundle["columns"]
 
-  for col in fit_cols:
-      if col not in df.columns:
-          df[col] = 0
+    for col in fit_cols:
+        if col not in df.columns:
+            df[col] = 0
 
-  df_fit = df[fit_cols].copy()
+    df_fit = df[fit_cols].copy()
 
-  df_fit = safe_log_transform(df_fit, fit_cols)
+    df_fit = safe_log_transform(df_fit, fit_cols)
 
-  df_fit = scaler.transform(df_fit)
+    df_fit = scaler.transform(df_fit)
 
-  df[fit_cols] = df_fit
+    df[fit_cols] = df_fit
 
-  return df
+    return df
+  
+  except:
+    FileNotFoundError(f"Cannot use missing or incomplete data. {profile_path} must be fully built first")
 
 
 def transform_sensor(df):
@@ -483,7 +485,7 @@ def build_network_profile(train_df, profile_path="profiles/network_log_robust_sc
 
 def build_categorical_profile(train_df, profile_path="profiles/categorical.pkl"):
     parent_dir = os.dirname(profile_path)
-    
+
     if parent_dir:
           os.makedirs(parent_dir, exist_ok=True)
 
