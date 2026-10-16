@@ -388,30 +388,28 @@ def transform_fused_features(df):
 
 
 def transform_network(df, profile_path="profiles/network_log_robust_scaler.pkl"):
-  try:
-    df = df.copy()
-    bundle = joblib.load(profile_path)
-    scaler = bundle["scaler"]
-    fit_cols = bundle["columns"]
+  if not os.path.exists(os.path.dirname(profile_path)):
+    raise FileNotFoundError(f"{profile_path} must be created before transforming.")
+  df = df.copy()
+  bundle = joblib.load(profile_path)
+  scaler = bundle["scaler"]
+  fit_cols = bundle["columns"]
 
-    for col in fit_cols:
-        if col not in df.columns:
-            df[col] = 0
+  for col in fit_cols:
+      if col not in df.columns:
+          df[col] = 0
 
-    df_fit = df[fit_cols].copy()
+  df_fit = df[fit_cols].copy()
 
-    df_fit = safe_log_transform(df_fit, fit_cols)
+  df_fit = safe_log_transform(df_fit, fit_cols)
 
-    df_fit = scaler.transform(df_fit)
+  df_fit = scaler.transform(df_fit)
 
-    df[fit_cols] = df_fit
+  df[fit_cols] = df_fit
 
-    return df
+  return df
+
   
-  except:
-    FileNotFoundError(f"Cannot use missing or incomplete data. {profile_path} must be fully built first")
-
-
 def transform_sensor(df):
   df = df.copy()
   for col in SENSOR_CONTINUOUS:
@@ -453,7 +451,11 @@ def encode_categorical(df, profile_path="profiles/categorical.pkl"):
     if col not in df.columns:
       df[col] = "unknown"
 
-    all_categories = values + ["unknown"]
+    if "unknown" in values:
+      all_categories = values
+    else:
+      all_categories = values + ["unknown"]
+
     # Convert to categorical with predefined categories. Values not in `all_categories` will become NaN.
     df[col] = pd.Categorical(df[col], categories=all_categories)
     # Fill NaN values (which are the original values not in `all_categories`) with 'unknown'.
