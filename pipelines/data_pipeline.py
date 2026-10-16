@@ -368,7 +368,7 @@ def build_fused_features_raw(df):
   return X
 
 
-def transform_fused_features(df):
+def transform_fused_features(df, net_path="profiles/network_log_robust_scaler.pkl", cat_path="profiles/categorical.pkl"):
   df = df.copy()
   X_net = select_existing(df, LOG_ROBUST)
   X_sens = select_existing(df, SENSOR_CONTINUOUS)
@@ -376,11 +376,11 @@ def transform_fused_features(df):
   X_cat = select_existing(df, CATEGORICAL)
   X_ratio = select_existing(df, RATIO)
 
-  X_net = transform_network(X_net)
+  X_net = transform_network(X_net, net_path)
   X_sens = transform_sensor(X_sens)
   X_ratio = transform_ratio(X_ratio)
   X_bin = select_binary(X_bin)
-  X_cat = encode_categorical(X_cat)
+  X_cat = encode_categorical(X_cat, cat_path)
 
   X = pd.concat([X_net, X_sens, X_bin, X_cat, X_ratio], axis=1)
 
@@ -583,10 +583,10 @@ Answer: Static models assume independence while sequence models assume temporal
         dependencies. Therefore, splitting strategy differs by hypothesis class.
 """
 
-def get_full_pipeline(mode: int, batch_size=None, profile_path="profiles"):
+def get_full_pipeline(mode: int, batch_size=None, profile_dir="profiles"):
   # profile paths
-  network_profile_path = os.path.join(profile_path, "network_log_robust_scaler.pkl")
-  categorical_profile_path = os.path.join(profile_path, "categorical.pkl")
+  network_profile_path = os.path.join(profile_dir, "network_log_robust_scaler.pkl")
+  categorical_profile_path = os.path.join(profile_dir, "categorical.pkl")
 
   # load raw data
   cache_file = os.path.join(CACHE_DIR, f"raw_mode_{mode}.parquet")
@@ -657,7 +657,7 @@ def get_full_pipeline(mode: int, batch_size=None, profile_path="profiles"):
   X_train = build_fused_features_raw(train)
 
   if not os.path.exists(categorical_profile_path):
-    build_categorical_profile(X_train)
+    build_categorical_profile(X_train, categorical_profile_path)
 
   y_val = val["target"].copy()
   X_val = build_fused_features_raw(val)
@@ -668,12 +668,12 @@ def get_full_pipeline(mode: int, batch_size=None, profile_path="profiles"):
   if not os.path.exists(network_profile_path):
     train_tmp = X_train.copy()
     train_tmp["target"] = y_train
-    build_network_profile(train_tmp)
+    build_network_profile(train_tmp, network_profile_path)
 
   # transform per X (preserve labels for y)
-  X_train = transform_fused_features(X_train)
-  X_val = transform_fused_features(X_val)
-  X_test = transform_fused_features(X_test)
+  X_train = transform_fused_features(X_train, network_profile_path, categorical_profile_path)
+  X_val = transform_fused_features(X_val, network_profile_path, categorical_profile_path)
+  X_test = transform_fused_features(X_test, network_profile_path, categorical_profile_path)
 
   X_train = X_train.drop(columns=["target"], errors="ignore").drop(columns=["__ts__"], errors="ignore")
   X_val = X_val.drop(columns=["target"], errors="ignore").drop(columns=["__ts__"], errors="ignore")
