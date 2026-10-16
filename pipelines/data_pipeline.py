@@ -583,7 +583,11 @@ Answer: Static models assume independence while sequence models assume temporal
         dependencies. Therefore, splitting strategy differs by hypothesis class.
 """
 
-def get_full_pipeline(mode: int, batch_size=None):
+def get_full_pipeline(mode: int, batch_size=None, profile_path="profiles"):
+  # profile paths
+  network_profile_path = os.path.join(profile_path, "network_log_robust_scaler.pkl")
+  categorical_profile_path = os.path.join(profile_path, "categorical.pkl")
+
   # load raw data
   cache_file = os.path.join(CACHE_DIR, f"raw_mode_{mode}.parquet")
 
@@ -652,7 +656,7 @@ def get_full_pipeline(mode: int, batch_size=None):
   y_train = train["target"].copy()
   X_train = build_fused_features_raw(train)
 
-  if not os.path.exists("profiles/categorical.pkl"):
+  if not os.path.exists(categorical_profile_path):
     build_categorical_profile(X_train)
 
   y_val = val["target"].copy()
@@ -661,7 +665,7 @@ def get_full_pipeline(mode: int, batch_size=None):
   X_test = build_fused_features_raw(test)
 
   # fit scaler only on train split
-  if not os.path.exists("profiles/network_log_robust_scaler.pkl"):
+  if not os.path.exists(network_profile_path):
     train_tmp = X_train.copy()
     train_tmp["target"] = y_train
     build_network_profile(train_tmp)
