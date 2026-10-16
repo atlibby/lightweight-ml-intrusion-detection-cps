@@ -285,6 +285,9 @@ def safe_log_transform(df, cols):
       col = np.clip(col, 0, clip_val)
       df[c] = np.log1p(col)
 
+  for col, limit in cols.items():
+      df[col] = np.log1p(df[col].clip(lower=0, upper=limit))
+
   return df
 
 
@@ -471,10 +474,21 @@ def build_network_profile(train_df, profile_path="profiles/network_log_robust_sc
 
     if parent_dir:
       os.makedirs(parent_dir, exist_ok=True)
+      
 
     df_all = select_existing(train_df, LOG_ROBUST)
 
-    df_all = safe_log_transform(df_all, df_all.columns)
+    clip_limits = {}
+
+    for col in df_all.columns:
+      train_val =  df_all[col]
+      if train_val.isna().all():
+        limit = 0
+      else:
+        limit = np.nanpercentile(train_val, 99.9)
+      clip_limits[col] = limit
+
+    df_all = safe_log_transform(df_all, clip_limits)
 
     scaler = RobustScaler().fit(df_all)
 
