@@ -697,7 +697,11 @@ def get_full_pipeline(mode: int, batch_size=None, profile_dir="profiles"):
   return loaders, scaler, le
 
 
-def get_full_sequence_pipeline(mode: int, window=None, batch_size=None):
+def get_full_sequence_pipeline(mode: int, window=None, batch_size=None, profile_dir="profiles"):
+  # profile paths
+  network_profile_path = os.path.join(profile_dir, "network_log_robust_scaler.pkl")
+  categorical_profile_path = os.path.join(profile_dir, "categorical.pkl")
+
   # load raw and fit timestamps first
   cache_file = os.path.join(CACHE_DIR, f"raw_mode_{mode}.parquet")
 
@@ -762,8 +766,8 @@ def get_full_sequence_pipeline(mode: int, window=None, batch_size=None):
   y_train = train["target"].copy()
   X_train = build_fused_features_raw(train)
 
-  if not os.path.exists("profiles/categorical.pkl"):
-    build_categorical_profile(X_train)
+  if not os.path.exists(categorical_profile_path):
+    build_categorical_profile(X_train, categorical_profile_path)
 
   ts_train = X_train["__ts__"].copy()
   y_val = val["target"].copy()
@@ -774,21 +778,21 @@ def get_full_sequence_pipeline(mode: int, window=None, batch_size=None):
   ts_test = X_test["__ts__"].copy()
 
   # fit scaler only on train split
-  if not os.path.exists("profiles/network_log_robust_scaler.pkl"):
+  if not os.path.exists(network_profile_path):
     train_tmp = X_train.copy()
     train_tmp["target"] = y_train
-    build_network_profile(train_tmp)
+    build_network_profile(train_tmp, network_profile_path)
 
   # transform per X (preserve labels for y)
-  X_train = transform_fused_features(X_train)
+  X_train = transform_fused_features(X_train, network_profile_path, categorical_profile_path)
   X_train["__ts__"] = ts_train.values
   X_train = X_train.apply(pd.to_numeric, errors="coerce").fillna(0)
 
-  X_val = transform_fused_features(X_val)
+  X_val = transform_fused_features(X_val, network_profile_path, categorical_profile_path)
   X_val["__ts__"] = ts_val.values
   X_val = X_val.apply(pd.to_numeric, errors="coerce").fillna(0)
 
-  X_test = transform_fused_features(X_test)
+  X_test = transform_fused_features(X_test, network_profile_path, categorical_profile_path)
   X_test["__ts__"] = ts_test.values
   X_test = X_test.apply(pd.to_numeric, errors="coerce").fillna(0)
 
