@@ -273,19 +273,10 @@ def load_ton_sensor():
   return pd.concat(frames, ignore_index=True)
 
 
-def safe_log_transform(df, cols):
+def safe_log_transform(df, clip_limits):
   df = df.copy()
-  for c in cols:
-      col = df[c].values
-      if np.all(np.isnan(col)):
-        continue
 
-      clip_val = np.nanpercentile(col, 99.9)
-
-      col = np.clip(col, 0, clip_val)
-      df[c] = np.log1p(col)
-
-  for col, limit in cols.items():
+  for col, limit in clip_limits.items():
       df[col] = np.log1p(df[col].clip(lower=0, upper=limit))
 
   return df
@@ -391,20 +382,21 @@ def transform_fused_features(df, net_path="profiles/network_log_robust_scaler.pk
 
 
 def transform_network(df, profile_path="profiles/network_log_robust_scaler.pkl"):
-  if not os.path.exists(os.path.dirname(profile_path)):
+  if not os.path.isfile(profile_path):
     raise FileNotFoundError(f"{profile_path} must be created before transforming.")
   df = df.copy()
   bundle = joblib.load(profile_path)
   scaler = bundle["scaler"]
+  clip_limits = bundle["clip_limits"]
   fit_cols = bundle["columns"]
-
+  
   for col in fit_cols:
       if col not in df.columns:
           df[col] = 0
 
   df_fit = df[fit_cols].copy()
 
-  df_fit = safe_log_transform(df_fit, fit_cols)
+  df_fit = safe_log_transform(df_fit, clip_limits)
 
   df_fit = scaler.transform(df_fit)
 
@@ -495,7 +487,8 @@ def build_network_profile(train_df, profile_path="profiles/network_log_robust_sc
     joblib.dump(
         {
             "scaler": scaler,
-            "columns": df_all.columns.tolist()
+            "columns": df_all.columns.tolist(),
+            "clip_limits": clip_limits
         }, profile_path)
 
 
